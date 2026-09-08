@@ -1,23 +1,63 @@
-<?xml version="1.0" encoding="utf-8"?><manifest xmlns:android="http://schemas.android.com/apk/res/android"><uses-permission android:name="android.permission.INTERNET" />
-<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+<?xml version="1.0" encoding="utf-8"?>
 
-<application
-    android:allowBackup="true"
-    android:label="TuyaPapaHome"
-    android:supportsRtl="true"
-    android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+<!--//app/src/main/AndroidManifest.xml-->
+<!--ver 1.01-01-->
 
-    <activity
-        android:name=".MainActivity"
-        android:exported="true">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
-        <intent-filter>
-            <action android:name="android.intent.action.MAIN" />
-            <category android:name="android.intent.category.LAUNCHER" />
-        </intent-filter>
+    <uses-permission
+        android:name="android.permission.INTERNET" />
 
-    </activity>
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE" />
 
-</application>
+    <uses-permission
+        android:name="android.permission.ACCESS_WIFI_STATE" />
+
+    <uses-permission
+        android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <uses-permission
+        android:name="android.permission.CAMERA" />
+
+    <uses-permission
+        android:name="android.permission.RECORD_AUDIO" />
+
+
+    <application
+
+        android:name=".app.TuyaMyHomeApplication"
+
+        android:allowBackup="true"
+
+        android:label="TuyaPapaHome"
+
+        android:supportsRtl="true"
+
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+
+
+        <activity
+
+            android:name=".MainActivity"
+
+            android:exported="true">
+
+
+            <intent-filter>
+
+                <action
+                    android:name="android.intent.action.MAIN" />
+
+                <category
+                    android:name="android.intent.category.LAUNCHER" />
+
+            </intent-filter>
+
+
+        </activity>
+
+
+    </application>
 
 </manifest>
