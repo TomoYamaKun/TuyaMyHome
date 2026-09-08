@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--//app/src/main/res/layout/activity_main.xml-->
+<!--ver 1.01-00-->
+
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tuya MyHome 設定"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:paddingBottom="8dp" />
+
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tuya Developer Platform 接続情報"
+            android:textSize="14sp"
+            android:paddingBottom="24dp" />
+
+
+        <!-- App Key / Client ID -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="App Key / Client ID"
+            android:textStyle="bold" />
+
+
+        <EditText
+            android:id="@+id/editAppKey"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="App Key または Client ID"
+            android:inputType="text"
+            android:singleLine="true" />
+
+
+        <!-- App Secret -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="App Secret / Client Secret"
+            android:textStyle="bold" />
+
+
+        <EditText
+            android:id="@+id/editAppSecret"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="App Secret または Client Secret"
+            android:inputType="textPassword"
+            android:singleLine="true" />
+
+
+        <!-- Data Center -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="Data Center"
+            android:textStyle="bold" />
+
+
+        <EditText
+            android:id="@+id/editDataCenter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="例: Western America Data Center"
+            android:inputType="text"
+            android:singleLine="true" />
+
+
+        <!-- SHA256 -->
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="SHA256 Signature"
+            android:textStyle="bold" />
+
+
+        <EditText
+            android:id="@+id/editSha256"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="SHA256署名"
+            android:inputType="text"
+            android:maxLines="3"
+            android:minLines="2" />
+
+
+        <!-- Save -->
+
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="32dp"
+            android:text="設定を保存" />
+
+
+        <!-- Status -->
+
+        <TextView
+            android:id="@+id/textStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:padding="12dp"
+            android:text="設定を読み込み中..."
+            android:textSize="14sp" />
+
+
+    </LinearLayout>
+
+</ScrollView>
