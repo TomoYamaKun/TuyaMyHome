@@ -1,192 +1,291 @@
-//app/src/main/java/com/tuya/myhome/papa/MainActivity.kt
-//ver 1.01-00
-
 package com.tuya.myhome.papa
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
+import android.view.ViewGroup
+import android.widget.LinearLayout
+import android.widget.ScrollView
 import android.widget.TextView
-import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.tuya.myhome.papa.config.TuyaConfigManager
+import com.tuya.smart.home.sdk.TuyaHomeSdk
+import com.tuya.smart.home.sdk.bean.HomeBean
+import com.tuya.smart.home.sdk.callback.ITuyaGetHomeListCallback
+import com.tuya.smart.sdk.bean.DeviceBean
 
 class MainActivity : AppCompatActivity() {
 
-    private lateinit var configManager: TuyaConfigManager
-
-    private lateinit var editAppKey: EditText
-    private lateinit var editAppSecret: EditText
-    private lateinit var editDataCenter: EditText
-    private lateinit var editSha256: EditText
-
-    private lateinit var buttonSave: Button
-    private lateinit var textStatus: TextView
-
+    private lateinit var container: LinearLayout
+    private lateinit var statusText: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        setContentView(R.layout.activity_main)
+        createLayout()
 
-        configManager = TuyaConfigManager(this)
-
-        initializeViews()
-
-        loadConfig()
-
-        setupListeners()
+        loadDeviceList()
     }
 
+    private fun createLayout() {
 
-    private fun initializeViews() {
+        val scrollView = ScrollView(this)
 
-        editAppKey =
-            findViewById(R.id.editAppKey)
-
-        editAppSecret =
-            findViewById(R.id.editAppSecret)
-
-        editDataCenter =
-            findViewById(R.id.editDataCenter)
-
-        editSha256 =
-            findViewById(R.id.editSha256)
-
-        buttonSave =
-            findViewById(R.id.buttonSave)
-
-        textStatus =
-            findViewById(R.id.textStatus)
-    }
-
-
-    private fun loadConfig() {
-
-        editAppKey.setText(
-            configManager.getAppKey()
-        )
-
-        editAppSecret.setText(
-            configManager.getAppSecret()
-        )
-
-        editDataCenter.setText(
-            configManager.getDataCenter()
-        )
-
-        editSha256.setText(
-            configManager.getSha256()
-        )
-
-
-        if (configManager.isConfigured()) {
-
-            textStatus.text =
-                "保存済みのTuya設定を読み込みました"
-
-        } else {
-
-            textStatus.text =
-                "Tuya接続情報を入力してください"
+        container = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setPadding(30, 30, 30, 30)
         }
-    }
 
-
-    private fun setupListeners() {
-
-        buttonSave.setOnClickListener {
-
-            saveConfig()
+        statusText = TextView(this).apply {
+            text = "Tuya SDK Initialized\nChecking devices..."
+            textSize = 18f
+            setPadding(10, 10, 10, 30)
         }
+
+        container.addView(statusText)
+
+        scrollView.addView(container)
+
+        setContentView(scrollView)
     }
 
 
-    private fun saveConfig() {
+    private fun loadDeviceList() {
 
-        val appKey =
-            editAppKey.text.toString().trim()
+        val user = TuyaHomeSdk.getUserInstance().user
 
-        val appSecret =
-            editAppSecret.text.toString().trim()
+        if (user == null) {
 
-        val dataCenter =
-            editDataCenter.text.toString().trim()
-
-        val sha256 =
-            editSha256.text.toString().trim()
-
-
-        if (appKey.isEmpty()) {
-
-            showError(
-                "App Key / Client ID を入力してください"
-            )
+            statusText.text =
+                "Status: Not Logged In\n\n" +
+                "Please login first."
 
             return
         }
 
-
-        if (appSecret.isEmpty()) {
-
-            showError(
-                "App Secret / Client Secret を入力してください"
-            )
-
-            return
-        }
+        statusText.text =
+            "Logged in\n" +
+            "Loading Home list..."
 
 
-        if (dataCenter.isEmpty()) {
+        TuyaHomeSdk.getHomeManagerInstance()
+            .queryHomeList(object : ITuyaGetHomeListCallback {
 
-            showError(
-                "Data Center を入力してください"
-            )
+                override fun onSuccess(homeBeans: List<HomeBean>?) {
 
-            return
-        }
+                    if (homeBeans.isNullOrEmpty()) {
+
+                        runOnUiThread {
+                            statusText.text =
+                                "No Home found."
+                        }
+
+                        return
+                    }
+
+                    runOnUiThread {
+
+                        statusText.text =
+                            "Home count: ${homeBeans.size}\n"
+                    }
+
+                    loadHomeDevices(homeBeans)
+                }
 
 
-        val result =
-            configManager.saveConfig(
-                appKey = appKey,
-                appSecret = appSecret,
-                dataCenter = dataCenter,
-                sha256 = sha256
-            )
+                override fun onError(
+                    errorCode: String?,
+                    errorMsg: String?
+                ) {
+
+                    runOnUiThread {
+
+                        statusText.text =
+                            "Failed to query Home list\n\n" +
+                            "Code: $errorCode\n" +
+                            "Message: $errorMsg"
+                    }
+                }
+            })
+    }
 
 
-        if (result) {
+    private fun loadHomeDevices(
+        homeBeans: List<HomeBean>
+    ) {
 
-            textStatus.text =
-                "設定を保存しました"
+        for (home in homeBeans) {
 
-            Toast.makeText(
-                this,
-                "Tuya設定を保存しました",
-                Toast.LENGTH_SHORT
-            ).show()
+            val homeId = home.homeId
 
-        } else {
+            val homeClient =
+                TuyaHomeSdk.newHomeInstance(homeId)
 
-            showError(
-                "設定の保存に失敗しました"
-            )
+
+            homeClient.getHomeDetail(
+                object :
+                    com.tuya.smart.home.sdk.callback.ITuyaHomeResultCallback {
+
+                    override fun onSuccess(
+                        bean: HomeBean?
+                    ) {
+
+                        runOnUiThread {
+
+                            addHomeHeader(bean)
+
+                            val devices =
+                                bean?.deviceList
+
+                            if (devices.isNullOrEmpty()) {
+
+                                addText(
+                                    "No devices found."
+                                )
+
+                            } else {
+
+                                for (device in devices) {
+
+                                    addDevice(device)
+                                }
+                            }
+                        }
+                    }
+
+
+                    override fun onError(
+                        errorCode: String?,
+                        errorMsg: String?
+                    ) {
+
+                        runOnUiThread {
+
+                            addText(
+                                "Failed Home Detail\n" +
+                                "$errorMsg ($errorCode)"
+                            )
+                        }
+                    }
+                })
         }
     }
 
 
-    private fun showError(
+    private fun addHomeHeader(
+        home: HomeBean?
+    ) {
+
+        val text = TextView(this).apply {
+
+            text =
+                "\n━━━━━━━━━━━━━━━━━━\n" +
+                "HOME\n" +
+                "Name : ${home?.name}\n" +
+                "ID   : ${home?.homeId}\n" +
+                "━━━━━━━━━━━━━━━━━━"
+
+            textSize = 18f
+
+            setPadding(
+                10,
+                30,
+                10,
+                20
+            )
+        }
+
+        container.addView(text)
+    }
+
+
+    private fun addDevice(
+        device: DeviceBean
+    ) {
+
+        val deviceText =
+            TextView(this).apply {
+
+                text =
+                    "📱 ${device.name}\n" +
+                    "Device ID : ${device.devId}\n" +
+                    "Product ID: ${device.productId}\n" +
+                    "Category  : ${device.category}\n" +
+                    "Online    : ${device.isOnline}\n\n" +
+                    "Tap to open"
+
+                textSize = 16f
+
+                setPadding(
+                    30,
+                    25,
+                    30,
+                    25
+                )
+
+                isClickable = true
+
+                setOnClickListener {
+
+                    openCamera(
+                        device.devId,
+                        device.name
+                    )
+                }
+            }
+
+
+        container.addView(
+            deviceText,
+            LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT,
+                ViewGroup.LayoutParams.WRAP_CONTENT
+            )
+        )
+    }
+
+
+    private fun addText(
         message: String
     ) {
 
-        textStatus.text =
-            "エラー: $message"
+        val text = TextView(this).apply {
 
-        Toast.makeText(
-            this,
-            message,
-            Toast.LENGTH_LONG
-        ).show()
+            text = message
+
+            textSize = 16f
+
+            setPadding(
+                20,
+                20,
+                20,
+                20
+            )
+        }
+
+        container.addView(text)
+    }
+
+
+    private fun openCamera(
+        deviceId: String,
+        deviceName: String
+    ) {
+
+        val intent =
+            Intent(
+                this,
+                CameraActivity::class.java
+            )
+
+        intent.putExtra(
+            "DEVICE_ID",
+            deviceId
+        )
+
+        intent.putExtra(
+            "DEVICE_NAME",
+            deviceName
+        )
+
+        startActivity(intent)
     }
 }
