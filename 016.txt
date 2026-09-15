@@ -1,0 +1,36 @@
+2204-      36: getstatic     #410                // Field mApiUrlProvider:Lcom/thingclips/smart/android/network/IApiUrlProvider;
+2205-      39: dup
+2206-      40: astore_2
+2207-      41: ifnull        52
+2208-      44: aload_2
+2209-      45: aload_0
+2210-      46: aload_1
+2211-      47: invokeinterface #1024,  3         // InterfaceMethod com/thingclips/smart/android/network/IApiUrlProvider.setH3Domain:(Ljava/lang/String;Ljava/lang/String;)V
+2212-      52: return
+2213-
+2214:  static {};
+2215-    Code:
+2216-       0: new           #560                // class java/util/HashMap
+2217-       3: dup
+2218-       4: invokespecial #1026               // Method java/util/HashMap."<init>":()V
+2219-       7: putstatic     #855                // Field mConfigContryCode:Ljava/util/Map;
+2220-      10: new           #373                // class com/thingclips/smart/android/network/request/ThingSmartNetWorkConfig
+2221-      13: dup
+2222-      14: invokespecial #1027               // Method com/thingclips/smart/android/network/request/ThingSmartNetWorkConfig."<init>":()V
+2223-      17: putstatic     #821                // Field thingSmartNetWorkConfig:Lcom/thingclips/smart/android/network/request/ThingSmartNetWorkConfig;
+2224-      20: iconst_0
+2225-      21: putstatic     #1029               // Field isDevkitDebug:Z
+2226-      24: iconst_1
+2227-      25: putstatic     #911                // Field sDeviceCacheOpen:Z
+2228-      28: iconst_0
+2229-      29: putstatic     #991                // Field sNeutralDomainSwitch:Z
+2230-      32: iconst_0
+2231-      33: putstatic     #995                // Field sAudioDump:Z
+2232-      36: iconst_0
+2233-      37: putstatic     #999                // Field sLangDebug:Z
+2234-      40: new           #1031               // class java/util/concurrent/ConcurrentHashMap
+2235-      43: dup
+2236-      44: invokespecial #1032               // Method java/util/concurrent/ConcurrentHashMap."<init>":()V
+2237-      47: putstatic     #1004               // Field mCommonParams:Ljava/util/Map;
+2238-      50: return
+2239-}
