@@ -1,5 +1,5 @@
 // /storage/internal_new/project/TuyaMyHome/app/src/main/java/com/tuya/myhome/papa/MainActivity.kt
-// ver 1.01-09
+// ver 1.01-10
 
 package com.tuya.myhome.papa
 
@@ -8,6 +8,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
+import android.view.WindowInsets
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ScrollView
@@ -21,9 +22,10 @@ import com.thingclips.smart.home.sdk.callback.IThingHomeResultCallback
 import com.thingclips.smart.sdk.bean.DeviceBean
 
 class MainActivity : AppCompatActivity() {
+
     companion object {
         private const val TAG = "TUYA_DEBUG"
-        private const val APP_VERSION = "1.01-09"
+        private const val APP_VERSION = "1.01-10"
     }
 
     private lateinit var container: LinearLayout
@@ -38,7 +40,9 @@ class MainActivity : AppCompatActivity() {
             debug("========================================")
             debug("APP VERSION = $APP_VERSION")
             debug("STEP 1: MainActivity.onCreate START")
+
             createLayout()
+
             debug("STEP 2: Layout created")
 
             loadApplicationDebugLog()
@@ -54,10 +58,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             debug("STEP 3: Start SDK state check")
+
             val sdkReady = checkAndInitializeSdk()
 
             debug("SDK ready result = $sdkReady")
-            debug("MyApplication.sdkInitialized = ${MyApplication.sdkInitialized}")
+            debug(
+                "MyApplication.sdkInitialized = " +
+                    MyApplication.sdkInitialized
+            )
 
             if (sdkReady) {
                 debug("STEP 4: Start loadDeviceList")
@@ -90,11 +98,18 @@ class MainActivity : AppCompatActivity() {
     private fun createLayout() {
         debug("createLayout() START")
 
-        val scrollView = ScrollView(this)
+        val scrollView = ScrollView(this).apply {
+            clipToPadding = false
+        }
 
         container = LinearLayout(this).apply {
             orientation = LinearLayout.VERTICAL
-            setPadding(30, 30, 30, 30)
+            setPadding(
+                30,
+                30,
+                30,
+                30
+            )
         }
 
         statusText = TextView(this).apply {
@@ -102,28 +117,84 @@ class MainActivity : AppCompatActivity() {
                 "Tuya Smart Life SDK\n" +
                 "Initializing...\n" +
                 "Version: $APP_VERSION"
+
             textSize = 18f
-            setPadding(10, 10, 10, 20)
+
+            setPadding(
+                10,
+                10,
+                10,
+                20
+            )
         }
 
         val debugHeader = TextView(this).apply {
             text =
                 "===== DEBUG LOG =====\n" +
                 "APP VERSION = $APP_VERSION"
+
             textSize = 16f
-            setPadding(10, 20, 10, 10)
+
+            setPadding(
+                10,
+                20,
+                10,
+                10
+            )
         }
 
         debugText = TextView(this).apply {
             textSize = 12f
             setTextIsSelectable(true)
-            setPadding(15, 15, 15, 15)
-            setBackgroundColor(0xFF202020.toInt())
-            setTextColor(0xFF00FF00.toInt())
+
+            setPadding(
+                15,
+                15,
+                15,
+                15
+            )
+
+            setBackgroundColor(
+                0xFF202020.toInt()
+            )
+
+            setTextColor(
+                0xFF00FF00.toInt()
+            )
         }
+
+        // --------------------------------------------------------
+        // Settings Button
+        // --------------------------------------------------------
+
+        val settingsButton = Button(this).apply {
+            text = "Settings"
+
+            setOnClickListener {
+                try {
+                    debug("Settings button clicked")
+                    debug("Opening SettingsActivity")
+
+                    val intent = Intent(
+                        this@MainActivity,
+                        SettingsActivity::class.java
+                    )
+
+                    startActivity(intent)
+                } catch (e: Throwable) {
+                    debug("ERROR opening SettingsActivity")
+                    debugException(e)
+                }
+            }
+        }
+
+        // --------------------------------------------------------
+        // Reload Button
+        // --------------------------------------------------------
 
         val reloadButton = Button(this).apply {
             text = "Reload Device List"
+
             setOnClickListener {
                 debug("========================================")
                 debug("APP VERSION = $APP_VERSION")
@@ -131,7 +202,10 @@ class MainActivity : AppCompatActivity() {
 
                 val sdkReady = checkAndInitializeSdk()
 
-                debug("Reload SDK ready result = $sdkReady")
+                debug(
+                    "Reload SDK ready result = $sdkReady"
+                )
+
                 debug(
                     "Reload MyApplication.sdkInitialized = " +
                         MyApplication.sdkInitialized
@@ -142,7 +216,10 @@ class MainActivity : AppCompatActivity() {
                     loadDeviceList()
                 } else {
                     debug("Reload: SKIP loadDeviceList")
-                    debug("Reload reason: Tuya SDK is NOT initialized")
+                    debug(
+                        "Reload reason: " +
+                            "Tuya SDK is NOT initialized"
+                    )
 
                     statusText.text =
                         "Tuya SDK is not initialized\n\n" +
@@ -152,21 +229,41 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
+        // --------------------------------------------------------
+        // Clear Debug Log Button
+        // --------------------------------------------------------
+
         val clearButton = Button(this).apply {
             text = "Clear Debug Log"
+
             setOnClickListener {
                 debugLog.clear()
-                MyApplication.clearLog(this@MainActivity)
+
+                MyApplication.clearLog(
+                    this@MainActivity
+                )
+
                 updateDebugView()
+
                 debug("Debug log cleared")
                 debug("APP VERSION = $APP_VERSION")
             }
         }
 
+        // --------------------------------------------------------
+        // Add Views
+        // --------------------------------------------------------
+
         container.addView(statusText)
+
+        container.addView(settingsButton)
+
         container.addView(reloadButton)
+
         container.addView(clearButton)
+
         container.addView(debugHeader)
+
         container.addView(
             debugText,
             LinearLayout.LayoutParams(
@@ -176,14 +273,42 @@ class MainActivity : AppCompatActivity() {
         )
 
         scrollView.addView(container)
+
         setContentView(scrollView)
+
+        // --------------------------------------------------------
+        // Android System Bar Insets
+        // --------------------------------------------------------
+        // Androidのシステムナビゲーションバー
+        // 「▲ ■ 三」などの領域とアプリ画面が
+        // 重ならないように下側へ余白を追加する。
+        // --------------------------------------------------------
+
+        scrollView.setOnApplyWindowInsetsListener { view, insets ->
+
+            val systemBars = insets.getInsets(
+                WindowInsets.Type.systemBars()
+            )
+
+            view.setPadding(
+                view.paddingLeft,
+                view.paddingTop,
+                view.paddingRight,
+                systemBars.bottom + 30
+            )
+
+            insets
+        }
+
+        scrollView.requestApplyInsets()
 
         debug("createLayout() SUCCESS")
     }
 
     private fun loadApplicationDebugLog() {
         try {
-            val applicationLog = MyApplication.getLog(this)
+            val applicationLog =
+                MyApplication.getLog(this)
 
             if (applicationLog.isEmpty()) {
                 debug("===== APPLICATION LOG =====")
@@ -192,15 +317,20 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
-            debug("===== APPLICATION LOG FROM MyApplication =====")
+            debug(
+                "===== APPLICATION LOG FROM MyApplication ====="
+            )
 
-            val lines = applicationLog.split("\n")
+            val lines =
+                applicationLog.split("\n")
 
             for (line in lines) {
                 debug("[APP] $line")
             }
 
-            debug("===== END APPLICATION LOG =====")
+            debug(
+                "===== END APPLICATION LOG ====="
+            )
         } catch (e: Throwable) {
             debug(
                 "ERROR reading MyApplication log: " +
@@ -214,11 +344,16 @@ class MainActivity : AppCompatActivity() {
             debug("===== SDK STATE CHECK =====")
             debug("APP VERSION = $APP_VERSION")
 
-            val currentApplication = ThingSmartSdk.getApplication()
+            val currentApplication =
+                ThingSmartSdk.getApplication()
 
             debug(
                 "ThingSmartSdk.getApplication() = " +
-                    if (currentApplication == null) "NULL" else "NOT_NULL"
+                    if (currentApplication == null) {
+                        "NULL"
+                    } else {
+                        "NOT_NULL"
+                    }
             )
 
             if (currentApplication != null) {
@@ -226,52 +361,82 @@ class MainActivity : AppCompatActivity() {
                     "SDK Application class = " +
                         currentApplication.javaClass.name
                 )
+
                 debug(
                     "SDK Application hash = " +
-                        System.identityHashCode(currentApplication)
+                        System.identityHashCode(
+                            currentApplication
+                        )
                 )
+
                 debug(
                     "Current Application hash = " +
-                        System.identityHashCode(application)
+                        System.identityHashCode(
+                            application
+                        )
                 )
 
                 if (currentApplication === application) {
-                    debug("SDK Application = SAME INSTANCE")
+                    debug(
+                        "SDK Application = SAME INSTANCE"
+                    )
                 } else {
-                    debug("SDK Application = DIFFERENT INSTANCE")
+                    debug(
+                        "SDK Application = DIFFERENT INSTANCE"
+                    )
                 }
 
-                debug("SDK already has Application context")
+                debug(
+                    "SDK already has Application context"
+                )
+
                 debug("SDK STATE RESULT = READY")
-                debug("===== SDK STATE CHECK END =====")
+                debug(
+                    "===== SDK STATE CHECK END ====="
+                )
+
                 return true
             }
 
             debug("SDK Application is NULL")
-            debug("Attempting diagnostic SDK initialization")
+            debug(
+                "Attempting diagnostic SDK initialization"
+            )
 
-            val myApplication = application as? MyApplication
+            val myApplication =
+                application as? MyApplication
 
             if (myApplication == null) {
-                debug("ERROR: application is NOT MyApplication")
+                debug(
+                    "ERROR: application is NOT MyApplication"
+                )
+
                 debug(
                     "Actual Application = " +
                         application.javaClass.name
                 )
+
                 debug("SDK STATE RESULT = NOT_READY")
-                debug("===== SDK STATE CHECK END =====")
+                debug(
+                    "===== SDK STATE CHECK END ====="
+                )
+
                 return false
             }
 
             debug("Application is MyApplication")
-            debug("Calling MyApplication.initializeTuyaSdk()")
-
-            val result = MyApplication.initializeTuyaSdk(
-                application as Application
+            debug(
+                "Calling MyApplication.initializeTuyaSdk()"
             )
 
+            val result =
+                MyApplication.initializeTuyaSdk(
+                    application as Application
+                )
+
             debug(
-                "MyApplication.initializeTuyaSdk() result = $result"
+                "MyApplication.initializeTuyaSdk() result = " +
+                    result
             )
 
             debug(
@@ -279,12 +444,17 @@ class MainActivity : AppCompatActivity() {
                     MyApplication.sdkInitialized
             )
 
-            val afterApplication = ThingSmartSdk.getApplication()
+            val afterApplication =
+                ThingSmartSdk.getApplication()
 
             debug(
                 "AFTER DIAGNOSTIC INIT: " +
                     "ThingSmartSdk.getApplication() = " +
-                    if (afterApplication == null) "NULL" else "NOT_NULL"
+                    if (afterApplication == null) {
+                        "NULL"
+                    } else {
+                        "NOT_NULL"
+                    }
             )
 
             if (afterApplication != null) {
@@ -292,23 +462,36 @@ class MainActivity : AppCompatActivity() {
                     "AFTER INIT Application class = " +
                         afterApplication.javaClass.name
                 )
+
                 debug(
                     "AFTER INIT Application hash = " +
-                        System.identityHashCode(afterApplication)
+                        System.identityHashCode(
+                            afterApplication
+                        )
                 )
+
                 debug(
                     "EXPECTED Application hash = " +
-                        System.identityHashCode(application)
+                        System.identityHashCode(
+                            application
+                        )
                 )
 
                 if (afterApplication === application) {
-                    debug("AFTER INIT = SAME APPLICATION INSTANCE")
+                    debug(
+                        "AFTER INIT = SAME APPLICATION INSTANCE"
+                    )
                 } else {
-                    debug("AFTER INIT = DIFFERENT APPLICATION INSTANCE")
+                    debug(
+                        "AFTER INIT = DIFFERENT APPLICATION INSTANCE"
+                    )
                 }
 
                 debug("SDK STATE RESULT = READY")
-                debug("===== SDK STATE CHECK END =====")
+                debug(
+                    "===== SDK STATE CHECK END ====="
+                )
+
                 return true
             }
 
@@ -316,8 +499,12 @@ class MainActivity : AppCompatActivity() {
                 "ERROR: SDK Application STILL NULL " +
                     "after diagnostic initialization"
             )
+
             debug("SDK STATE RESULT = NOT_READY")
-            debug("===== SDK STATE CHECK END =====")
+            debug(
+                "===== SDK STATE CHECK END ====="
+            )
+
             false
         } catch (e: Throwable) {
             debug("SDK STATE CHECK ERROR")
@@ -329,6 +516,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun debug(message: String) {
         Log.d(TAG, message)
+
         debugLog.append(message)
         debugLog.append("\n")
 
@@ -345,11 +533,29 @@ class MainActivity : AppCompatActivity() {
         var current: Throwable? = throwable
         var level = 0
 
-        while (current != null && level <= 10) {
-            debug("----- CAUSE LEVEL $level -----")
-            debug("Exception Type: ${current.javaClass.name}")
-            debug("Exception Message: ${current.message}")
-            debug("Localized Message: ${current.localizedMessage}")
+        while (
+            current != null &&
+            level <= 10
+        ) {
+            debug(
+                "----- CAUSE LEVEL $level -----"
+            )
+
+            debug(
+                "Exception Type: " +
+                    current.javaClass.name
+            )
+
+            debug(
+                "Exception Message: " +
+                    current.message
+            )
+
+            debug(
+                "Localized Message: " +
+                    current.localizedMessage
+            )
+
             debug("StackTrace:")
 
             for (element in current.stackTrace) {
@@ -359,13 +565,17 @@ class MainActivity : AppCompatActivity() {
             if (current.suppressed.isNotEmpty()) {
                 debug("Suppressed:")
 
-                for (suppressed in current.suppressed) {
+                for (
+                    suppressed in current.suppressed
+                ) {
                     debug(
                         "  ${suppressed.javaClass.name}: " +
                             "${suppressed.message}"
                     )
 
-                    for (element in suppressed.stackTrace) {
+                    for (
+                        element in suppressed.stackTrace
+                    ) {
                         debug("    at $element")
                     }
                 }
@@ -388,7 +598,8 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateDebugView() {
         if (::debugText.isInitialized) {
-            debugText.text = debugLog.toString()
+            debugText.text =
+                debugLog.toString()
         }
     }
 
@@ -396,27 +607,43 @@ class MainActivity : AppCompatActivity() {
         try {
             debug("loadDeviceList() START")
             debug("APP VERSION = $APP_VERSION")
-            debug("Checking ThingHomeSdk User Instance...")
+            debug(
+                "Checking ThingHomeSdk User Instance..."
+            )
 
             try {
-                val sdkApplication = ThingSmartSdk.getApplication()
+                val sdkApplication =
+                    ThingSmartSdk.getApplication()
+
                 val networkSdk =
-                    com.thingclips.smart.android.network.ThingSmartNetWork.mSdk
+                    com.thingclips.smart.android.network
+                        .ThingSmartNetWork.mSdk
 
                 debug(
                     "RUNTIME SDK CHECK: " +
                         "ThingSmartSdk.getApplication()=" +
-                        if (sdkApplication == null) "NULL" else "NOT_NULL" +
+                        if (sdkApplication == null) {
+                            "NULL"
+                        } else {
+                            "NOT_NULL"
+                        } +
                         ", ThingSmartNetWork.mSdk=" +
                         networkSdk
                 )
 
                 if (sdkApplication == null) {
-                    debug("ERROR: SDK Application is NULL")
-                    debug("loadDeviceList() ABORTED")
+                    debug(
+                        "ERROR: SDK Application is NULL"
+                    )
+
+                    debug(
+                        "loadDeviceList() ABORTED"
+                    )
+
                     statusText.text =
                         "SDK ERROR\n\n" +
                         "ThingSmartSdk Application is NULL"
+
                     return
                 }
             } catch (e: Throwable) {
@@ -424,24 +651,38 @@ class MainActivity : AppCompatActivity() {
                     "RUNTIME SDK CHECK ERROR: " +
                         "${e.javaClass.name}: ${e.message}"
                 )
-                debug("loadDeviceList() ABORTED")
+
+                debug(
+                    "loadDeviceList() ABORTED"
+                )
+
                 return
             }
 
-            val user = ThingHomeSdk.getUserInstance().user
-            debug("getUserInstance() SUCCESS")
+            val user =
+                ThingHomeSdk
+                    .getUserInstance()
+                    .user
+
+            debug(
+                "getUserInstance() SUCCESS"
+            )
 
             if (user == null) {
                 debug("USER = NULL")
+
                 statusText.text =
                     "Status: Not Logged In\n\n" +
                     "Tuya SDK initialized successfully.\n" +
                     "Please implement login."
+
                 return
             }
 
             debug("USER FOUND")
-            debug("Username: ${user.username}")
+            debug(
+                "Username: ${user.username}"
+            )
 
             statusText.text =
                 "Logged in\n" +
@@ -453,39 +694,60 @@ class MainActivity : AppCompatActivity() {
             ThingHomeSdk
                 .getHomeManagerInstance()
                 .queryHomeList(
-                    object : IThingGetHomeListCallback {
+                    object :
+                        IThingGetHomeListCallback {
+
                         override fun onSuccess(
                             homeBeans: List<HomeBean>?
                         ) {
-                            debug("Home List SUCCESS")
+                            debug(
+                                "Home List SUCCESS"
+                            )
 
-                            val count = homeBeans?.size ?: 0
-                            debug("Home Count: $count")
+                            val count =
+                                homeBeans?.size ?: 0
+
+                            debug(
+                                "Home Count: $count"
+                            )
 
                             if (homeBeans.isNullOrEmpty()) {
                                 runOnUiThread {
-                                    statusText.text = "No Home found."
+                                    statusText.text =
+                                        "No Home found."
                                 }
+
                                 return
                             }
 
                             runOnUiThread {
                                 statusText.text =
                                     "Logged in\n" +
-                                    "User: ${user.username}\n\n" +
+                                    "User: " +
+                                    "${user.username}\n\n" +
                                     "Home count: $count"
                             }
 
-                            loadHomeDevices(homeBeans)
+                            loadHomeDevices(
+                                homeBeans
+                            )
                         }
 
                         override fun onError(
                             errorCode: String?,
                             errorMsg: String?
                         ) {
-                            debug("Home List ERROR")
-                            debug("Code: $errorCode")
-                            debug("Message: $errorMsg")
+                            debug(
+                                "Home List ERROR"
+                            )
+
+                            debug(
+                                "Code: $errorCode"
+                            )
+
+                            debug(
+                                "Message: $errorMsg"
+                            )
 
                             runOnUiThread {
                                 statusText.text =
@@ -497,10 +759,19 @@ class MainActivity : AppCompatActivity() {
                     }
                 )
 
-            debug("queryHomeList() REQUEST SENT")
+            debug(
+                "queryHomeList() REQUEST SENT"
+            )
         } catch (e: Throwable) {
-            MyApplication.saveCrash(this, e)
-            debug("ERROR in loadDeviceList()")
+            MyApplication.saveCrash(
+                this,
+                e
+            )
+
+            debug(
+                "ERROR in loadDeviceList()"
+            )
+
             debugException(e)
 
             statusText.text =
@@ -510,42 +781,85 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadHomeDevices(homeBeans: List<HomeBean>) {
+    private fun loadHomeDevices(
+        homeBeans: List<HomeBean>
+    ) {
         debug("loadHomeDevices() START")
 
         for (home in homeBeans) {
             try {
-                val homeId = home.homeId
+                val homeId =
+                    home.homeId
 
-                debug("Loading Home: ${home.name}")
-                debug("Home ID: $homeId")
+                debug(
+                    "Loading Home: ${home.name}"
+                )
+
+                debug(
+                    "Home ID: $homeId"
+                )
 
                 val homeClient =
-                    ThingHomeSdk.newHomeInstance(homeId)
+                    ThingHomeSdk.newHomeInstance(
+                        homeId
+                    )
 
                 homeClient.getHomeDetail(
-                    object : IThingHomeResultCallback {
-                        override fun onSuccess(bean: HomeBean?) {
-                            debug("Home Detail SUCCESS")
-                            debug("Home Name: ${bean?.name}")
+                    object :
+                        IThingHomeResultCallback {
+
+                        override fun onSuccess(
+                            bean: HomeBean?
+                        ) {
+                            debug(
+                                "Home Detail SUCCESS"
+                            )
+
+                            debug(
+                                "Home Name: " +
+                                    "${bean?.name}"
+                            )
 
                             runOnUiThread {
                                 addHomeHeader(bean)
 
-                                val devices = bean?.deviceList
-                                val count = devices?.size ?: 0
+                                val devices =
+                                    bean?.deviceList
 
-                                debug("Device Count: $count")
+                                val count =
+                                    devices?.size ?: 0
+
+                                debug(
+                                    "Device Count: $count"
+                                )
 
                                 if (devices.isNullOrEmpty()) {
-                                    addText("No devices found.")
+                                    addText(
+                                        "No devices found."
+                                    )
                                 } else {
-                                    addText("Device count: $count")
+                                    addText(
+                                        "Device count: $count"
+                                    )
 
-                                    for (device in devices) {
-                                        debug("Device: ${device.name}")
-                                        debug("Device ID: ${device.devId}")
-                                        debug("Category: ${device.category}")
+                                    for (
+                                        device in devices
+                                    ) {
+                                        debug(
+                                            "Device: " +
+                                                "${device.name}"
+                                        )
+
+                                        debug(
+                                            "Device ID: " +
+                                                "${device.devId}"
+                                        )
+
+                                        debug(
+                                            "Category: " +
+                                                "${device.category}"
+                                        )
+
                                         addDevice(device)
                                     }
                                 }
@@ -556,9 +870,17 @@ class MainActivity : AppCompatActivity() {
                             errorCode: String?,
                             errorMsg: String?
                         ) {
-                            debug("Home Detail ERROR")
-                            debug("Code: $errorCode")
-                            debug("Message: $errorMsg")
+                            debug(
+                                "Home Detail ERROR"
+                            )
+
+                            debug(
+                                "Code: $errorCode"
+                            )
+
+                            debug(
+                                "Message: $errorMsg"
+                            )
                         }
                     }
                 )
@@ -569,55 +891,91 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun addHomeHeader(home: HomeBean?) {
-        val text = TextView(this).apply {
-            text =
-                "\n" +
-                "━━━━━━━━━━━━━━━━━━━━\n" +
-                "HOME\n" +
-                "━━━━━━━━━━━━━━━━━━━━\n" +
-                "Name : ${home?.name}\n" +
-                "ID   : ${home?.homeId}\n" +
-                "━━━━━━━━━━━━━━━━━━━━"
-            textSize = 18f
-            setPadding(10, 30, 10, 20)
-        }
+    private fun addHomeHeader(
+        home: HomeBean?
+    ) {
+        val text =
+            TextView(this).apply {
+                text =
+                    "\n" +
+                    "━━━━━━━━━━━━━━━━━━━━\n" +
+                    "HOME\n" +
+                    "━━━━━━━━━━━━━━━━━━━━\n" +
+                    "Name : ${home?.name}\n" +
+                    "ID   : ${home?.homeId}\n" +
+                    "━━━━━━━━━━━━━━━━━━━━"
+
+                textSize = 18f
+
+                setPadding(
+                    10,
+                    30,
+                    10,
+                    20
+                )
+            }
 
         container.addView(text)
     }
 
-    private fun addDevice(device: DeviceBean) {
-        val deviceText = TextView(this).apply {
-            text =
-                "━━━━━━━━━━━━━━━━━━━━\n" +
-                "DEVICE\n" +
-                "━━━━━━━━━━━━━━━━━━━━\n" +
-                "Name       : ${device.name}\n" +
-                "Device ID  : ${device.devId}\n" +
-                "Product ID : ${device.productId}\n" +
-                "Category   : ${device.category}\n" +
-                "Online     : ${device.isOnline}\n\n" +
-                "▶ Tap to open Camera"
+    private fun addDevice(
+        device: DeviceBean
+    ) {
+        val deviceText =
+            TextView(this).apply {
+                text =
+                    "━━━━━━━━━━━━━━━━━━━━\n" +
+                    "DEVICE\n" +
+                    "━━━━━━━━━━━━━━━━━━━━\n" +
+                    "Name       : ${device.name}\n" +
+                    "Device ID  : ${device.devId}\n" +
+                    "Product ID : ${device.productId}\n" +
+                    "Category   : ${device.category}\n" +
+                    "Online     : ${device.isOnline}\n\n" +
+                    "▶ Tap to open Camera"
 
-            textSize = 16f
-            setPadding(30, 25, 30, 25)
-            isClickable = true
+                textSize = 16f
 
-            setOnClickListener {
-                debug("Device Clicked: ${device.name}")
-                openCamera(device.devId, device.name)
+                setPadding(
+                    30,
+                    25,
+                    30,
+                    25
+                )
+
+                isClickable = true
+
+                setOnClickListener {
+                    debug(
+                        "Device Clicked: " +
+                            "${device.name}"
+                    )
+
+                    openCamera(
+                        device.devId,
+                        device.name
+                    )
+                }
             }
-        }
 
         container.addView(deviceText)
     }
 
-    private fun addText(message: String) {
-        val text = TextView(this).apply {
-            text = message
-            textSize = 16f
-            setPadding(20, 20, 20, 20)
-        }
+    private fun addText(
+        message: String
+    ) {
+        val text =
+            TextView(this).apply {
+                text = message
+                textSize = 16f
+
+                setPadding(
+                    20,
+                    20,
+                    20,
+                    20
+                )
+            }
 
         container.addView(text)
     }
@@ -627,19 +985,32 @@ class MainActivity : AppCompatActivity() {
         deviceName: String
     ) {
         try {
-            debug("Opening CameraActivity")
-
-            val intent = Intent(
-                this,
-                CameraActivity::class.java
+            debug(
+                "Opening CameraActivity"
             )
 
-            intent.putExtra("DEVICE_ID", deviceId)
-            intent.putExtra("DEVICE_NAME", deviceName)
+            val intent =
+                Intent(
+                    this,
+                    CameraActivity::class.java
+                )
+
+            intent.putExtra(
+                "DEVICE_ID",
+                deviceId
+            )
+
+            intent.putExtra(
+                "DEVICE_NAME",
+                deviceName
+            )
 
             startActivity(intent)
         } catch (e: Throwable) {
-            debug("ERROR opening CameraActivity")
+            debug(
+                "ERROR opening CameraActivity"
+            )
+
             debugException(e)
         }
     }
